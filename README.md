@@ -1,84 +1,77 @@
-# A-CUT TOPIQ + FLIVE Hybrid
+# A-CUT TOPIQ + FLIVE Hybrid Technical IQA
 
-#### A-CUT Capstone Project — Mobile Image Quality and Aesthetic Assessment
+> **A-CUT Best Log-Only Shadow Technical IQA Candidate — 60/40 Hybrid Fusion of TOPIQ-Lite and FLIVE Image Mobile**
 
-> Hybrid model utilizing TOPIQ and FLIVE (topiq_existing_flive_57_43).
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![Project: A-CUT](https://img.shields.io/badge/Project-A--CUT%20Capstone-success.svg)](https://github.com/gwanjongkim/photo_score_project)
 
-## Introduction
+## 1. Overview
 
-Hybrid model utilizing TOPIQ and FLIVE signals, specifically the 60/40 ratio variant. It was identified as the best performing candidate under the official benchmark protocol.
+- **Role in A-CUT**: Best Offline / Log-Only Technical IQA Candidate (Official SRCC 0.8069)
+- **Task**: Hybrid Technical Image Quality Assessment Fusion
+- **Architecture**: Weighted linear fusion (`60% TOPIQ-Lite Mixed112 + 40% FLIVE Image Mobile` or `57/43` grid optimum) combining semantic-aware multi-scale TOPIQ features with FLIVE's authentic distortion sensitivity.
 
-- **Role**: Best official log-only candidate.
-- **Task**: Image Quality and Aesthetic Assessment.
+## 2. Input / Output Contract & Model Artifacts
 
-## Model / Method
+- **Input Contract**: Precomputed or live signal predictions from `topiq_lite_mixed112_frozen_fp16.tflite` (`384×384`) and `flive_image_mobile.tflite` (`224×224`)
+- **Output Contract**: Fused `[0, 100]` technical quality score
+- **Model Files (`models/model_files/` & Releases)**:
+  - `Uses `topiq_lite_mixed112_frozen_fp16.tflite` (in `acut-topiq-mixed112`) + `flive_image_mobile.tflite` (in `acut-technical-iqa`)`
 
-Combines signals from TOPIQ and FLIVE models. This hybrid approach significantly outperforms the existing production baseline on the official protocol, though it is currently restricted to log-only profiling.
+## 3. Benchmark Results
 
-- **Artifacts**: Inferred from scripts
+| Fusion Variant | Official 4,967 SRCC | Common Split SRCC | MAE | Severe FP | Decision |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| `topiq_flive_60_40` | **0.8069** | 0.8218 | 5.08 | 3 | **Best Log-Only Candidate** |
+| `topiq_existing_flive_57_43` | 0.8065 | **0.8222** | **5.04** | 3 | Grid Optimum |
+| `production_existing` (Baseline) | 0.7168 | 0.7036 | 12.00 | **0** | Production |
 
-## Dataset and Benchmark
+## 4. Key Engineering Notes & 2026 Audit Findings
 
-- Benchmark results are summarized below. See `docs/benchmark_summary.md` for detailed per-dataset analysis.
-- Note: Large datasets are excluded due to size/license constraints.
+- **+0.090 SRCC Gain Over Production Baseline**: Raising overall SRCC from `0.7168` to `0.8069` and cutting MAE from `12.00` to `5.04`.
+- **Deployment Gate**: Designated as the primary log-only shadow candidate (`results/signal_recommendation.json`) pending on-device severe-FP gating verification.
 
-## Model Weights / Artifacts
-
-- Due to size constraints, artifacts larger than 50MB are not included in this repository.
-- Recommended hosting: GitHub Releases.
-- See `models/download.md`.
-
-## Repository Structure
-
-```
-.
-├── configs/
-├── docs/
-├── models/
-├── results/
-├── scripts/
-└── requirements.txt
-```
-
-## Requirements
-
-Please refer to `requirements.txt`. Minimal dependencies include `torch`, `tensorflow`, `numpy`, and `pillow`.
-
-## Quick Start
+## 5. Quick Start
 
 ```bash
 pip install -r requirements.txt
-python scripts/benchmark_student_flive_hybrid_20260604.py
+python scripts/benchmark_technical_iqa_signals_20260604.py --help
 ```
-*(Verify path assumptions in `docs/reproduction_notes.md`)*
 
-## Results
+For full documentation, see:
+- [`docs/model_card.md`](./docs/model_card.md) — Architecture, tensor contracts, and limitations
+- [`docs/benchmark_summary.md`](./docs/benchmark_summary.md) — Detailed metrics and dataset evaluations
+- [`docs/reproduction_notes.md`](./docs/reproduction_notes.md) — Environment and reproduction guide
+- [`models/download.md`](./models/download.md) — Model binary hashes and download notes
 
-| Dataset | Metric | Value | Evidence Path | Decision |
-|---------|--------|-------|---------------|----------|
-| Official Protocol | topiq_flive_60_40 SRCC | 0.8069 | outputs/official_protocol_technical_signal_benchmark_20260604/report.md | Log-Only |
-| Official Protocol | topiq_flive_60_40 PLCC | 0.8694 | outputs/official_protocol_technical_signal_benchmark_20260604/report.md | Log-Only |
-| Official Protocol | topiq_flive_60_40 MAE | 7.62 | outputs/official_protocol_technical_signal_benchmark_20260604/report.md | Log-Only |
+## 6. A-CUT Ecosystem Repositories
 
-## Limitations
+| Repository | Dimension | Role / Status | Key Metric |
+| :--- | :---: | :--- | :--- |
+| [acut-nima-mobile](https://github.com/gwanjongkim/acut-nima-mobile) | Aesthetic (IAA) | **Production Ensemble (0.40)** | AVA SRCC `0.5894`, AUC `0.8018` |
+| [acut-rgnet-mobile](https://github.com/gwanjongkim/acut-rgnet-mobile) | Aesthetic (IAA) | **Production Ensemble (0.45)** | AADB SRCC `0.6819` (FP16 `0.6648`) |
+| [acut-mobile-alamp](https://github.com/gwanjongkim/acut-mobile-alamp) | Aesthetic (IAA) | **Production Ensemble (0.15)** | AVA Acc `0.7633`, AUC `0.7877` |
+| [acut-icaa-color-aesthetics](https://github.com/gwanjongkim/acut-icaa-color-aesthetics) | Color Aesthetics | **Verified TF-Native Port** | ICAA17K Color SRCC `0.8791`, MOS `0.9058` |
+| [acut-koniq-flive-technical-iqa](https://github.com/gwanjongkim/acut-koniq-flive-technical-iqa) | Technical (IQA) | **Production Baseline (4/7 + 3/7)** | Official SRCC `0.7168` (`0.7958` recon), `0` Severe FP |
+| [acut-technical-iqa](https://github.com/gwanjongkim/acut-technical-iqa) | Technical (IQA) | **Umbrella Benchmark** | 4,967-Image Official Protocol Suite |
+| [acut-topiq-mixed112](https://github.com/gwanjongkim/acut-topiq-mixed112) | Technical (IQA) | **Evaluated Candidate** | SPAQ SRCC `0.8990`, KonIQ `0.8630` |
+| [acut-topiq-flive-hybrid](https://github.com/gwanjongkim/acut-topiq-flive-hybrid) | Technical (IQA) | **Best Log-Only Shadow (60/40)** | Official SRCC `0.8069`, MAE `5.04` |
+| [acut-c6-topiq-koniq](https://github.com/gwanjongkim/acut-c6-topiq-koniq) | Technical (IQA) | **Negative Result (Rejected)** | Official SRCC `0.7314`, MAE `15.39` |
+| [acut-mdiqa-benchmark](https://github.com/gwanjongkim/acut-mdiqa-benchmark) | Technical (IQA) | **Teacher Ceiling Reference** | KonIQ SRCC `0.9464`, SPAQ `0.9136` |
+| [acut-musiq-probe](https://github.com/gwanjongkim/acut-musiq-probe) | Technical (IQA) | **Reference & Probe Study** | Official SPAQ `0.9460`, KonIQ `0.9275` |
+| [acut-student-iqa](https://github.com/gwanjongkim/acut-student-iqa) | Technical (IQA) | **Distillation Study (No-Go)** | 14k Student SRCC `0.7436`, SPAQ `0.8984` |
+| [photo_score_project](https://github.com/gwanjongkim/photo_score_project) | Full Monorepo | **Core Research Workspace** | Complete Training, Audit & Pipeline Code |
 
-- Results are based on local reproduction and may not exactly match original papers.
-- See `docs/model_card.md` for detailed limitations.
+## 7. References & Citation
 
-## Citation
+- Chen et al. (2024), *TOPIQ*, IEEE TIP.
+- Ying et al. (2020), *PaQ-2-PiQ (FLIVE)*, CVPR.
 
 ```bibtex
-@misc{acut_topiq_flive_2026,
-  title        = {A-CUT TOPIQ + FLIVE Hybrid: Mobile Image Quality and Aesthetic Assessment Model},
+@misc{acut_topiq_flive_hybrid_2026,
+  title        = {A-CUT TOPIQ + FLIVE Hybrid Technical IQA: A-CUT Best Log-Only Shadow Technical IQA Candidate — 60/40 Hybrid Fusion of TOPIQ-Lite and FLIVE Image Mobile},
   author       = {Kim, Gwanjung},
   year         = {2026},
-  note         = {Capstone project repository}
+  howpublished = {\url{https://github.com/gwanjongkim/acut-topiq-flive-hybrid}}
 }
 ```
-### Original References
-
-- A-CUT Technical IQA Signal Benchmark (2026)
-
-## Related Repositories
-
-- [A-CUT Public Model Repositories](..)
